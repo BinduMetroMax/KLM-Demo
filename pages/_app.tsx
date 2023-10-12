@@ -18,6 +18,7 @@ import { ColorModeContextProvider } from "@contexts";
 import "@refinedev/antd/dist/reset.css";
 import dataProvider from "@refinedev/simple-rest";
 import { authProvider } from "src/authProvider";
+import "../globals.css"
 
 const API_URL = "https://api.fake-rest.refine.dev";
 
@@ -37,8 +38,8 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout): JSX.Element {
 
     return (
       <ThemedLayoutV2
-        Header={() => <Header sticky />}
-        Sider={(props) => <ThemedSiderV2 {...props} fixed />}
+      Header={() => <Header sticky />}
+      Sider={(props) => <ThemedSiderV2 {...props} fixed />}
       >
         <Component {...pageProps} />
       </ThemedLayoutV2>
@@ -47,7 +48,6 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout): JSX.Element {
 
   return (
     <>
-      <GitHubBanner />
       <RefineKbarProvider>
         <ColorModeContextProvider>
           <DevtoolsProvider>
