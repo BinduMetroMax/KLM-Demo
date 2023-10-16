@@ -1,44 +1,45 @@
 import { AuthBindings } from "@refinedev/core";
+import { axiosInstance } from "@refinedev/simple-rest";
+import axios from "axios";
 import nookies from "nookies";
+axiosInstance
 
-const mockUsers = [
-  {
-    name: "John Doe",
-    email: "johndoe@mail.com",
-    roles: ["admin"],
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-  {
-    name: "Jane Doe",
-    email: "janedoe@mail.com",
-    roles: ["editor"],
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-];
+
+const LoginURl = "/api/auth/login"
+
+
 
 export const authProvider: AuthBindings = {
-  login: async ({ email, username, password, remember }) => {
-    // Suppose we actually send a request to the back end here.
-    const user = mockUsers[0];
 
-    if (user) {
-      nookies.set(null, "auth", JSON.stringify(user), {
-        maxAge: 30 * 24 * 60 * 60,
-        path: "/",
-      });
-      return {
-        success: true,
-        redirectTo: "/",
-      };
+  login: async ({ phone, code }) => {
+    console.log(phone, "USER");
+    console.log(code, "PASSWORD");
+
+    try {
+      const response = await axios.post(LoginURl, {
+        phoneNumebr: phone,
+      })
+      console.log(response.data);
+    } catch (error) {
+      console.log(error);
     }
 
+    // const user = mockUsers[0];
+
+    // if (user) {
+    //   nookies.set(null, "auth", JSON.stringify(user), {
+    //     maxAge: 60 * 60,
+    //     path: "/",
+
+    //   });
     return {
       success: false,
-      error: {
-        name: "LoginError",
-        message: "Invalid username or password",
-      },
+      redirectTo: "/",
+
     };
+    // }
+
+
   },
   logout: async () => {
     nookies.destroy(null, "auth");

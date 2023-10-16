@@ -1,7 +1,9 @@
-import { WelcomePage } from "@refinedev/core";
+import { NavigateToResource } from "@refinedev/nextjs-router";
 
-export default function Index() {
-  return <WelcomePage />;
+export default function Home() {
+  return <NavigateToResource />;
 }
 
-Index.noLayout = true;
+
+
+Home.noLayout = true;

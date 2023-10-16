@@ -1,35 +1,30 @@
-import { AuthPage } from "@refinedev/antd";
 
 import { GetServerSideProps } from "next";
 import { authProvider } from "src/authProvider";
+import CustomLoginPage from "./CustomLogin";
 
 export default function Login() {
   return (
-    <AuthPage
-      type="login"
-      formProps={{
-        initialValues: { email: "demo@refine.dev", password: "demodemo" },
-      }}
-    />
+    <CustomLoginPage />
   );
 }
 
 Login.noLayout = true;
 
-export const getServerSideProps: GetServerSideProps<{}> = async (context) => {
-  const { authenticated, redirectTo } = await authProvider.check(context);
+// export const getServerSideProps: GetServerSideProps<{}> = async (context) => {
+//   const { authenticated, redirectTo } = await authProvider.check(context);
 
-  if (authenticated) {
-    return {
-      props: {},
-      redirect: {
-        destination: redirectTo ?? "/",
-        permanent: false,
-      },
-    };
-  }
+//   if (authenticated) {
+//     return {
+//       props: {},
+//       redirect: {
+//         destination: redirectTo ?? "/",
+//         permanent: false,
+//       },
+//     };
+//   }
 
-  return {
-    props: {},
-  };
-};
+//   return {
+//     props: {},
+//   };
+// };
