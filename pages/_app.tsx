@@ -18,7 +18,7 @@ import { Header } from "@components/header";
 import { ColorModeContextProvider } from "@contexts";
 import "@refinedev/antd/dist/reset.css";
 import dataProvider from "@refinedev/simple-rest";
-import { authProvider } from "src/authProvider";
+// import { authProvider } from "src/authProvider";
 
 const API_URL = "https://api.fake-rest.refine.dev";
 
@@ -64,7 +64,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout): JSX.Element {
             routerProvider={routerProvider}
             dataProvider={dataProvider(API_URL)}
             notificationProvider={notificationProvider}
-            authProvider={authProvider}
+            // authProvider={authProvider}
             resources={[
               {
                 name: "Users",
