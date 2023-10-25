@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import parseCookie from "utils/cookieParser";
 import jwt_decode from "jwt-decode";
@@ -21,29 +21,25 @@ const apiAxiosInstance: AxiosInstance = axios.create({
 
 const getUpdatedAccesstoken = async (refreshToken: string) => {
 
-    let isRefreshTokenExpired = true;
+    const { exp }: any = jwt_decode(refreshToken);
 
-    if (isRefreshTokenExpired) {
-        const { exp }: any = jwt_decode(refreshToken);
-        isRefreshTokenExpired = Math.floor(Date.now() / 1000) > exp;
-        console.log(isRefreshTokenExpired);
+    const isRefreshTokenExpired = Math.floor(Date.now() / 1000) > exp;
 
-    } else {
-        const response = await apiAxiosInstance.get("/admin/auth/refresh-token", {
-            headers: {
-                Authorization: "Bearer " + refresh_token,
-            },
-        });
+    // console.log(isRefreshTokenExpired);
 
-        console.log(response.headers);
-    }
+    apiAxiosInstance.post("/api/admin/auth/refresh-token", {
+        headers: {
+            Authorization: "Bearer " + refresh_token,
+        },
+    });
+
 };
 
 export default async function server_calls(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    console.log(req);
+    // console.log(req);
 
     const tokenFromCookie = parseCookie(req.headers.cookie);
 
@@ -56,40 +52,47 @@ export default async function server_calls(
     console.log(refresh_token);
 
     try {
-        let isAccessTokenExpired = true;
 
         const url: string = req.url!.replace("/api", "");
 
+
+
         if (access_token) {
+            // console.log("ONLY ACCESS TOKEN");
+            apiAxiosInstance.defaults.headers["Authorization"] = `Bearer ${access_token}`;
 
-            const { exp }: any = jwt_decode(access_token);
-            isAccessTokenExpired = Math.floor(Date.now() / 1000) > exp;
-            console.log(isAccessTokenExpired);
-        }
+            const axiosResponse = await apiAxiosInstance.request({
+                url,
+                method: req.method,
+                data: req.body,
+            });
 
-        if (req.url !== "/admin/auth/login") {
-
-            if (isAccessTokenExpired) {
-                apiAxiosInstance.defaults.headers["Authorization"] = `Bearer ${getUpdatedAccesstoken(refresh_token)}`;
-            } else {
-                apiAxiosInstance.defaults.headers["Authorization"] = `Bearer ${access_token}`;
+            if (axiosResponse.headers["set-cookie"]) {
+                res.setHeader("Set-Cookie", axiosResponse.headers["set-cookie"]);
             }
 
+            res.status(axiosResponse.status).json(axiosResponse.data);
+
+        } else {
+            console.log("ONLY REFRESH ");
+            // apiAxiosInstance.defaults.headers["Authorization"] = `Bearer ${getUpdatedAccesstoken(refresh_token)}`;
+
+            await apiAxiosInstance.post("/api/admin/auth/refresh-token").then((refresh_res: AxiosResponse) => {
+                refresh_res.headers
+
+                if (refresh_res.headers["set-cookie"]) {
+                    res.setHeader("Set-Cookie", refresh_res.headers["set-cookie"]);
+                }
+
+            })
+
         }
 
-        const axiosResponse = await apiAxiosInstance.request({
-            url,
-            method: req.method,
-            data: req.body,
-        });
 
-        console.log(axiosResponse.data);
 
-        if (axiosResponse.headers["set-cookie"]) {
-            res.setHeader("Set-Cookie", axiosResponse.headers["set-cookie"]);
-        }
+        // console.log(axiosResponse.data);
 
-        res.status(axiosResponse.status).json(axiosResponse.data);
+
 
     } catch (error: any) {
 

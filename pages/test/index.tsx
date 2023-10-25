@@ -31,6 +31,14 @@ function App() {
 
     };
 
+    const handleFetch = async () => {
+
+        axios.get("/api/admin/user/profile").then((res: any) => {
+            console.log(res, "USERPROFILEAPI");
+        })
+
+    }
+
     return (
         <div className="App">
             <div>
@@ -53,6 +61,8 @@ function App() {
                 />
                 <button onClick={handleVerifyOtp}>Verify OTP</button>
             </div>
+
+            <button onClick={handleFetch}>Fetch Profile</button>
         </div>
 
 
