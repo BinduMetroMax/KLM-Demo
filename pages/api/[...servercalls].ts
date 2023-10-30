@@ -1,100 +1,72 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import { NextApiRequest, NextApiResponse } from "next";
 import { parseCookie, parseTokens } from "utils/cookieParser";
 
-
 const backendApiBaseUrl = "http://localhost:4005";
-let access_token: string;
-let refresh_token: string;
+// const backendApiBaseUrl = "https://dev-api.lmd.innowyze.in";
 
 const axiosApiInstance: AxiosInstance = axios.create({
     baseURL: backendApiBaseUrl,
 });
 
-
 export default async function server_calls(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-
-
     const tokenFromCookie = parseCookie(req.headers.cookie);
 
-    access_token = tokenFromCookie.access_token;
-    refresh_token = tokenFromCookie.refresh_token;
+    const { access_token, refresh_token } = tokenFromCookie;
 
-    const openApiEndPoints = [
-        "/api/admin/auth/login", "/api/admin/auth/validate"
-    ]
+    const openApiEndPoints = ["/api/admin/auth/login", "/api/admin/auth/validate"]
+
+    // Function to send request and handle response
+    const sendRequest = async (token: string) => {
+
+        axiosApiInstance.defaults.headers["Authorization"] = `Bearer ${token}`;
+
+        const axiosResponse = await axiosApiInstance.request({
+            ...req,
+            url: req.url!.replace("/api", ""),
+            method: req.method,
+            data: req.body,
+        });
+
+        // Set cookie if present in the response header
+        if (axiosResponse.headers["set-cookie"]) {
+            res.setHeader("Set-Cookie", axiosResponse.headers["set-cookie"]);
+        }
+
+        res.status(axiosResponse.status).json(axiosResponse.data);
+    };
 
     try {
 
-        const url: string = req.url!.replace("/api", "");
-
-
         if (access_token) {
 
-            axiosApiInstance.defaults.headers["Authorization"] = `Bearer ${access_token}`;
+            await sendRequest(access_token);
 
-            const axiosResponse = await axiosApiInstance.request({
-                // ...req,
-                url,
-                method: req.method,
-                data: req.body,
+        } else if (refresh_token && !openApiEndPoints.includes(req.url || "")) {
+
+            const refresh_res: AxiosResponse = await axiosApiInstance.post("/admin/auth/refresh-token", null, {
+                headers: { "Authorization": `Bearer ${refresh_token}` }
             });
-            if (axiosResponse.headers["set-cookie"]) {
-                res.setHeader("Set-Cookie", axiosResponse.headers["set-cookie"]);
+
+            if (refresh_res.headers["set-cookie"]) {
+                res.setHeader("Set-Cookie", refresh_res.headers["set-cookie"]);
             }
 
-            res.status(axiosResponse.status).json(axiosResponse.data);
+            const updatedAccessToken = parseTokens(refresh_res.headers["set-cookie"])?.access_token;
 
-
-        } else if (!openApiEndPoints.includes(req.url || "")) {
-
-            let updatedAccessToken: string | undefined = "";
-
-            axiosApiInstance.defaults.headers["Authorization"] = `Bearer ${refresh_token}`;
-
-            await axiosApiInstance.post("/admin/auth/refresh-token").then(async (refresh_res: AxiosResponse) => {
-
-                updatedAccessToken = parseTokens(refresh_res.headers["set-cookie"])?.access_token
-
-                if (refresh_res.headers["set-cookie"]) {
-                    res.setHeader("Set-Cookie", refresh_res.headers["set-cookie"]);
-                }
-
-
-                axiosApiInstance.defaults.headers["Authorization"] = `Bearer ${updatedAccessToken}`;
-
-                const axiosResponse = await axiosApiInstance.request({
-                    url,
-                    method: req.method,
-                    data: req.body,
-                });
-
-
-                res.status(axiosResponse.status).json(axiosResponse.data);
-
-            }).catch((error: any) => {
-
-                res.status(error.response?.status).json(error.response?.data);
-            })
-
+            if (updatedAccessToken) {
+                await sendRequest(updatedAccessToken);
+            } else {
+                throw new Error("Failed to refresh access token");
+            }
         } else {
-            const axiosResponse = await axiosApiInstance.request({
-                url,
-                method: req.method,
-                data: req.body,
-            });
-            if (axiosResponse.headers["set-cookie"]) {
-                res.setHeader("Set-Cookie", axiosResponse.headers["set-cookie"]);
-            }
-
-            res.status(axiosResponse.status).json(axiosResponse.data);
+            await sendRequest("");
         }
-
     } catch (error: any) {
 
-        res.status(error.response?.status).json(error.response?.data);
+        res.status(error.response?.status || 500).json(error.response?.data || 'Internal Server Error');
     }
 }
