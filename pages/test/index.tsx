@@ -1,14 +1,16 @@
 import axios from 'axios';
 import React, { useState } from 'react';
+import { useAxios } from 'src/hooks/useAxios';
 
 function App() {
     const [mobile, setMobile] = useState<string>("8050692348");
     const [otp, setOtp] = useState<string>('');
+    const axiosApi = useAxios()
 
     const handleSendOtp = () => {
         console.log(mobile);
         try {
-            axios.post("/api/admin/auth/login", {
+            axiosApi.post("/admin/auth/login", {
                 mobile
             })
         } catch (error) {
@@ -19,7 +21,7 @@ function App() {
     const handleVerifyOtp = () => {
         try {
             console.log(otp);
-            axios.post("/api/admin/auth/validate", {
+            axiosApi.post("/admin/auth/validate", {
                 otp: otp,
                 mobile: "8050692348",
                 forAdmin: true,
@@ -33,9 +35,21 @@ function App() {
 
     const handleFetch = async () => {
 
-        axios.get("/api/admin/user/profile").then((res: any) => {
+        axiosApi.get("/admin/user/profile").then((res: any) => {
             console.log(res, "USERPROFILEAPI");
         })
+
+    }
+
+    const sendFile = (e: any) => {
+
+        console.log(e.target.files);
+
+        let formData = new FormData();
+
+        formData.append("excelFile", e.target.files[0])
+
+        axiosApi.post("/driver/bulk-upload", formData).then((res: any) => console.log(res))
 
     }
 
@@ -63,6 +77,8 @@ function App() {
             </div>
 
             <button onClick={handleFetch}>Fetch Profile</button>
+
+            <input type="file" onChange={sendFile} />
         </div>
 
 
