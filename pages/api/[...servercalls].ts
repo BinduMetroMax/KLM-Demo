@@ -9,9 +9,6 @@ let refresh_token: string;
 
 const axiosApiInstance: AxiosInstance = axios.create({
     baseURL: backendApiBaseUrl,
-    headers: {
-        Authorization: "",
-    },
 });
 
 
@@ -40,6 +37,7 @@ export default async function server_calls(
             axiosApiInstance.defaults.headers["Authorization"] = `Bearer ${access_token}`;
 
             const axiosResponse = await axiosApiInstance.request({
+                // ...req,
                 url,
                 method: req.method,
                 data: req.body,
